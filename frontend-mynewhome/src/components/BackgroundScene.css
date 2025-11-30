@@ -1,0 +1,476 @@
+.background-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.galaxy-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 25% 25%, rgba(134, 239, 172, 0.2), transparent 42%),
+    radial-gradient(circle at 75% 20%, rgba(216, 180, 254, 0.2), transparent 48%),
+    radial-gradient(circle at 50% 70%, rgba(134, 239, 172, 0.1), transparent 60%),
+    #000107;
+  animation: pulseGalaxy 22s ease-in-out infinite alternate;
+}
+
+.cosmic-noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='5' cy='5' r='1'/%3E%3Ccircle cx='40' cy='120' r='0.8'/%3E%3Ccircle cx='120' cy='60' r='0.7'/%3E%3Ccircle cx='150' cy='20' r='0.6'/%3E%3Ccircle cx='90' cy='150' r='0.9'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.25;
+  animation: shimmerNoise 70s linear infinite;
+}
+
+.starfield {
+  position: absolute;
+  inset: -45%;
+  background-image: radial-gradient(1.8px 1.8px at 20px 20px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.2px 1.2px at 60px 120px, rgba(134, 239, 172, 0.75), transparent),
+    radial-gradient(0.8px 0.8px at 80px 40px, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(0.6px 0.6px at 150px 90px, rgba(255, 255, 255, 0.65), transparent);
+  background-size: 180px 180px;
+}
+
+.starfield-back {
+  animation: driftStars 160s linear infinite;
+  opacity: 0.15;
+  filter: blur(1.5px);
+}
+
+.starfield-mid {
+  animation: driftStars 110s linear infinite reverse;
+  opacity: 0.38;
+}
+
+.starfield-front {
+  animation: driftStars 65s linear infinite;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
+}
+
+.particle-spark {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: sparkle 6s ease-in-out infinite;
+}
+
+.floating-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.92) saturate(1.05);
+  transition: transform 0.8s ease;
+}
+
+.house:hover .floating-photo,
+.room-card:hover .floating-photo {
+  transform: scale(1.06);
+}
+
+.nebula {
+  position: absolute;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 65%);
+  filter: blur(30px);
+}
+
+.sweep-one {
+  top: -15%;
+  left: -5%;
+  animation: sweepGlow 32s linear infinite;
+}
+
+.sweep-two {
+  bottom: -10%;
+  right: -15%;
+  animation: sweepGlow 38s linear infinite reverse;
+}
+
+.planet {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(134, 239, 172, 0.4));
+  box-shadow: inset -12px -20px 30px rgba(0, 0, 0, 0.35),
+    0 0 35px rgba(134, 239, 172, 0.35);
+  animation: orbit 40s linear infinite;
+}
+
+.planet-one {
+  width: 200px;
+  height: 200px;
+  top: 18%;
+  left: -60px;
+  animation-duration: 55s;
+}
+
+.planet-two {
+  width: 140px;
+  height: 140px;
+  bottom: 18%;
+  right: 12%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8), rgba(216, 180, 254, 0.35));
+  animation-duration: 42s;
+}
+
+.planet-three {
+  width: 120px;
+  height: 120px;
+  top: 22%;
+  right: 25%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 230, 150, 0.4));
+  animation-duration: 60s;
+}
+
+.planet-ring {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  border: 2px solid rgba(134, 239, 172, 0.6);
+  transform: rotateX(70deg);
+  animation: spinRing 25s linear infinite;
+}
+
+.planet-glow {
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 210, 120, 0.35), transparent 75%);
+  filter: blur(8px);
+  animation: pulseGlow 18s ease-in-out infinite;
+}
+
+.house {
+  position: absolute;
+  width: 210px;
+  height: 140px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(8, 10, 24, 0.6);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.45);
+  transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.8s ease;
+}
+
+.house-one {
+  top: 10%;
+  left: 5%;
+  animation: curveOrbitOne 26s ease-in-out infinite;
+}
+
+.house-two {
+  top: 28%;
+  right: 4%;
+  animation: curveOrbitTwo 24s ease-in-out infinite;
+}
+
+.house-three {
+  bottom: 15%;
+  left: 12%;
+  animation: curveOrbitThree 28s ease-in-out infinite;
+}
+
+.room-card {
+  position: absolute;
+  width: 190px;
+  height: 120px;
+  border-radius: 18px;
+  background: rgba(2, 4, 16, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 1.1s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.8s ease;
+}
+
+.room-one {
+  top: 52%;
+  left: 32%;
+  animation: curveOrbitFour 30s ease-in-out infinite;
+}
+
+.room-two {
+  top: 18%;
+  right: 24%;
+  animation: curveOrbitFive 26s ease-in-out infinite;
+}
+
+.room-three {
+  bottom: 8%;
+  right: 14%;
+  animation: curveOrbitSix 32s ease-in-out infinite;
+}
+
+@keyframes floatHouse {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-20px) scale(1.02);
+  }
+}
+
+@keyframes floatRoom {
+
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+
+  50% {
+    transform: translateY(-15px) translateX(10px);
+  }
+}
+
+@keyframes driftStars {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(15%, 15%, 0);
+  }
+}
+
+@keyframes sweepGlow {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: rotate(35deg) scale(1.2);
+    opacity: 0.65;
+  }
+
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.35;
+  }
+}
+
+@keyframes pulseGalaxy {
+  0% {
+    opacity: 0.85;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmerNoise {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(-10%, -5%, 0);
+  }
+}
+
+@keyframes curveOrbitOne {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(40px, -25px) scale(1.05);
+  }
+
+  50% {
+    transform: translate(60px, 10px) scale(0.98);
+  }
+
+  75% {
+    transform: translate(20px, 30px) scale(1.02);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes curveOrbitTwo {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(-30px, 15px) scale(1.04);
+  }
+
+  50% {
+    transform: translate(-55px, -25px) scale(1);
+  }
+
+  75% {
+    transform: translate(-15px, -10px) scale(1.03);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes curveOrbitThree {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(20px, -30px) scale(1.03);
+  }
+
+  50% {
+    transform: translate(55px, -10px) scale(0.97);
+  }
+
+  75% {
+    transform: translate(15px, 35px) scale(1.04);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes curveOrbitFour {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(30px, 25px) scale(1.04);
+  }
+
+  50% {
+    transform: translate(-10px, 40px) scale(1);
+  }
+
+  75% {
+    transform: translate(-35px, 5px) scale(1.05);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes curveOrbitFive {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(-25px, -20px) scale(1.02);
+  }
+
+  50% {
+    transform: translate(-45px, 15px) scale(0.97);
+  }
+
+  75% {
+    transform: translate(-10px, 30px) scale(1.03);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes curveOrbitSix {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  25% {
+    transform: translate(-35px, 15px) scale(1.04);
+  }
+
+  50% {
+    transform: translate(-20px, -35px) scale(0.99);
+  }
+
+  75% {
+    transform: translate(15px, -10px) scale(1.03);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(1.3);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes orbit {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(30px, -20px, 0) scale(1.05);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes spinRing {
+  0% {
+    transform: rotateX(70deg) rotate(0deg);
+  }
+
+  100% {
+    transform: rotateX(70deg) rotate(360deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 0.65;
+  }
+
+  100% {
+    opacity: 0.35;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .house,
+  .room-card {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}

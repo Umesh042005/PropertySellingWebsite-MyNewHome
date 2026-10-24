@@ -1,134 +1,101 @@
 package com.property.property_selling.controller;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.property.property_selling.dto.UserLoginDTO;
 import com.property.property_selling.dto.UserRegistrationDTO;
 import com.property.property_selling.dto.UserResponseDTO;
+import com.property.property_selling.exception.ApiException;
 import com.property.property_selling.model.User;
 import com.property.property_selling.security.JwtUtil;
 import com.property.property_selling.service.UserService;
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+
 import java.util.Collections;
-
-
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE, RequestMethod.PUT})
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
     private final JwtUtil jwtUtil;
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
+    private final GoogleIdTokenVerifier googleVerifier;
 
+    public AuthController(JwtUtil jwtUtil, UserService userService,
+                          @Value("${app.google.client-id:}") String googleClientId) {
+        this.jwtUtil = jwtUtil;
+        this.userService = userService;
+        this.googleVerifier = googleClientId.isBlank() ? null
+                : new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                        .setAudience(Collections.singletonList(googleClientId))
+                        .build();
+    }
 
+    // Register and log the user in straight away
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserRegistrationDTO dto) {
-        try {
-            UserResponseDTO userResponse = userService.register(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
-        }
+    public ResponseEntity<Map<String, Object>> register(@RequestBody UserRegistrationDTO dto) {
+        UserResponseDTO user = userService.register(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse(user, null));
     }
 
-    // User Login
+    // Login with username or email
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserLoginDTO dto) {
-        try {
-            //  Authenticate manually using UserService
-            UserResponseDTO userResponse = userService.login(dto);
-
-            //  Generate JWT token
-            String token = jwtUtil.generateToken(userResponse.getUsername());
-
-            return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "userId", userResponse.getId(),
-                    "username", userResponse.getUsername(),
-                    "role", userResponse.getRole()
-            ));
-        }
-     catch (BadCredentialsException e) { // Yahan BadCredentialsException catch hogi
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", e.getMessage()));
+    public Map<String, Object> login(@RequestBody UserLoginDTO dto) {
+        return authResponse(userService.login(dto), null);
     }
-        catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }
+
     @PostMapping("/google-login")
-    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
-        try {
-            String credential = request.get("credential");
-
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    new NetHttpTransport(),
-                    JacksonFactory.getDefaultInstance()
-            ).setAudience(Collections.singletonList(
-                    "69312397707-7g5e1c06e57ebn1akoj37cgmtcrt03qo.apps.googleusercontent.com"
-            )).build();
-
-            GoogleIdToken idToken = verifier.verify(credential);
-            if (idToken == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Invalid Google token"));
-            }
-
-            Payload payload = idToken.getPayload();
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            String picture = (String) payload.get("picture");
-
-            //  Check if user already exists
-            User user = userService.findByEmail(email);
-            if (user == null) {
-                UserRegistrationDTO newUser = new UserRegistrationDTO();
-                newUser.setEmail(email);
-                newUser.setUsername(name);
-                newUser.setPassword("GOOGLE_USER");  // Placeholder, not used for login
-                user = userService.saveGoogleUser(newUser);
-            }
-
-            //  Important: generate token with username (not email)
-            String token = jwtUtil.generateToken(user.getUsername());
-
-            return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "userId", user.getId(),
-                    "username", user.getUsername(),
-                    "email", email,
-                    "picture", picture
-            ));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Google Login Failed", "details", e.getMessage()));
+    public Map<String, Object> googleLogin(@RequestBody Map<String, String> request) {
+        if (googleVerifier == null) {
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "Google sign-in is not configured");
         }
+        GoogleIdToken idToken;
+        try {
+            idToken = googleVerifier.verify(request.get("credential"));
+        } catch (Exception e) {
+            log.warn("Google token verification failed", e);
+            idToken = null;
+        }
+        if (idToken == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid Google token");
+        }
+
+        Payload payload = idToken.getPayload();
+        if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Google email is not verified");
+        }
+        String email = payload.getEmail();
+
+        User user = userService.findByEmail(email);
+        if (user == null) {
+            user = userService.saveGoogleUser(email, (String) payload.get("name"));
+        }
+        return authResponse(userService.toDto(user), (String) payload.get("picture"));
     }
 
+    private Map<String, Object> authResponse(UserResponseDTO user, String picture) {
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("id", user.getId());
+        userMap.put("username", user.getUsername());
+        userMap.put("email", user.getEmail());
+        userMap.put("role", user.getRole());
+        userMap.put("picture", picture);
 
-
+        Map<String, Object> body = new HashMap<>();
+        body.put("token", jwtUtil.generateToken(user.getUsername()));
+        body.put("user", userMap);
+        return body;
+    }
 }

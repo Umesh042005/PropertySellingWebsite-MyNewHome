@@ -1,6 +1,10 @@
 package com.property.property_selling.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "properties")
@@ -11,12 +15,18 @@ public class Property {
     private long id;
 
     private String title;
+
+    // TEXT so AI-generated descriptions longer than 255 chars fit
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private double price;
     private String location;
     private String category;
 
+    // LONGBLOB so images up to the 5 MB upload limit fit (plain @Lob can map to a small BLOB)
     @Lob
+    @Column(columnDefinition = "LONGBLOB")
     private byte[] image;
     private String imageType;
 
@@ -24,9 +34,16 @@ public class Property {
     private String city;
 
     // Owner field with JPA annotation
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User owner;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 
     // Constructors
     public Property() {
@@ -80,4 +97,8 @@ public class Property {
 
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
+
+    public Instant getCreatedAt() { return createdAt; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
 }

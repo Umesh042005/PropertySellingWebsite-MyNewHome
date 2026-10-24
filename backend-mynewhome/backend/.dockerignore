@@ -1,0 +1,6 @@
+target
+.env
+.idea
+*.iml
+.mvn/wrapper/maven-wrapper.jar
+uploads

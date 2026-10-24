@@ -4,7 +4,8 @@ public class UserLoginDTO {
     private String username;
     private String password;
 
-    // Constructor
+    // Constructo -->Jab bhi parameterized constructor likho — No-arg constructor manually likhna ZAROORI hai, warna Jackson JSON → Object convert nahi kar payega aur app crash ho jayegi!
+    
     public UserLoginDTO() {}
 
     public UserLoginDTO(String username, String password) {

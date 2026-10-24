@@ -13,29 +13,40 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Custom service implementation of Spring Security's UserDetailsService.
+ * It is responsible for loading user-specific details from the database during authentication.
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
+    /**
+     * Repository for performing CRUD operations and queries on the User entity.
+     */
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Loads the user's data from the database using the username.
+     * Converts the user's single role string into a list of GrantedAuthority to satisfy Spring Security's authorization requirements.
+     *
+     * @param username the username identifying the user whose data is required
+     * @return a fully populated UserDetails object containing credentials and authorities
+     * @throws UsernameNotFoundException if the user could not be found by their username
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 1. User ko database se load karna
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        // 2.  CRITICAL FIX FOR 403: User ke role ko GrantedAuthority mein convert karna
-        //    Aapka User model single 'role' field use karta hai, isliye hum isko List mein wrap kar rahe hain.
         List<GrantedAuthority> authorities = Collections.singletonList(
                 new SimpleGrantedAuthority(user.getRole())
         );
 
-        // 3. Spring Security ke liye UserDetails object return karna (roles ke saath)
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                authorities // <-- Ab yahan roles hain!
+                authorities
         );
     }
 }

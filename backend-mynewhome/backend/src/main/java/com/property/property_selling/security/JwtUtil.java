@@ -2,66 +2,67 @@ package com.property.property_selling.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
+/**
+ * Utility class for handling JSON Web Tokens (JWT).
+ * Provides helper methods for token generation, parsing, extraction, and validation.
+ * The secret and validity come from configuration (JWT_SECRET / JWT_EXPIRATION_MS env vars),
+ * never from source code.
+ */
 @Component
 public class JwtUtil {
 
-    //  Secret key (minimum 256-bit)
-    private final String SECRET = "mysecretkeymysecretkeymysecretkey";
+    private final Key signingKey;
+    private final long expirationMs;
 
-    //  Token validity – 5 hours
-    private final long EXPIRATION_TIME = 1000 * 60 * 60 * 5;
-
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes());
+    /**
+     * @param secret       HMAC secret, at least 32 characters (256-bit) for HS256
+     * @param expirationMs token validity in milliseconds
+     */
+    public JwtUtil(@Value("${app.jwt.secret:}") String secret,
+                   @Value("${app.jwt.expiration-ms}") long expirationMs) {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET must be set and at least 32 characters long");
+        }
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expirationMs = expirationMs;
     }
 
-    //  Generate token (can use email or username)
-    public String generateToken(String identifier) {
+    /**
+     * Generates a signed JWT token containing the user's username as subject.
+     *
+     * @param username the user's unique username
+     * @return a compact JWT token string
+     */
+    public String generateToken(String username) {
         long nowMillis = System.currentTimeMillis();
         return Jwts.builder()
-                .setSubject(identifier) // can be username or email
+                .setSubject(username)
                 .setIssuedAt(new Date(nowMillis))
-                .setExpiration(new Date(nowMillis + EXPIRATION_TIME))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setExpiration(new Date(nowMillis + expirationMs))
+                .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    //  Extract subject (username/email)
-    public String extractSubject(String token) {
+    /**
+     * Parses the token, verifying signature and expiry, and returns its subject.
+     * Throws a JwtException if the token is invalid or expired.
+     *
+     * @param token the JWT token to extract from
+     * @return the subject (username) of the token
+     */
+    public String extractUsername(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .setAllowedClockSkewSeconds(3600)
+                .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
-    }
-    //  Added for backward compatibility
-    public String extractUsername(String token) {
-        return extractSubject(token);
-    }
-
-
-    //  Validate token (accept both username or email)
-    public boolean validateToken(String token, String identifier) {
-        String subject = extractSubject(token);
-        return subject.equalsIgnoreCase(identifier) && !isTokenExpired(token);
-    }
-
-    //  Check expiry
-    private boolean isTokenExpired(String token) {
-        Date expiration = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .setAllowedClockSkewSeconds(3600)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getExpiration();
-        return expiration.before(new Date());
     }
 }

@@ -1,0 +1,16 @@
+# Secrets - never commit. Use the .env.example files as templates.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Build output
+**/out/
+**/target/
+frontend-mynewhome/build/
+frontend-mynewhome/node_modules/
+
+# Editors / OS
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,53 @@
+# Full stack: MySQL + Spring Boot API + React (nginx).
+#   cp .env.example .env   # then fill in JWT_SECRET and DB passwords
+#   docker compose up -d --build
+# App: http://localhost:3000
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: propertydb
+      MYSQL_USER: ${DB_USERNAME:-mynewhome}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend-mynewhome/backend
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://db:3306/propertydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${DB_USERNAME:-mynewhome}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (at least 32 characters)}
+      FRONTEND_URL: ${PUBLIC_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend-mynewhome
+      args:
+        # Empty: the browser calls /api on the same origin and nginx proxies it to the backend
+        REACT_APP_API_URL: ""
+        REACT_APP_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "${APP_PORT:-3000}:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
